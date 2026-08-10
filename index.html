@@ -1,0 +1,1396 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Club Apps — конструктор звіту (DA-320)</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page:      #f9f9f7;
+    --surface:   #fcfcfb;
+    --ink-1:     #0b0b0b;
+    --ink-2:     #52514e;
+    --muted:     #898781;
+    --grid:      #e1e0d9;
+    --baseline:  #c3c2b7;
+    --border:    rgba(11,11,11,0.10);
+    --good:      #006300;
+    --bad:       #d03b3b;
+    --s-blue:    #2a78d6;
+    --s-garnet:  #c21e5c;
+    --s-gold:    #eda100;
+    --s-violet:  #4a3aa7;
+    --s-gray:    #898781;
+    --w0: #86b6ef; --w1: #3987e5; --w2: #1c5cab; --w3: #0d366b;
+    --wash:      rgba(11,11,11,0.045);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page:      #0d0d0d;
+      --surface:   #1a1a19;
+      --ink-1:     #ffffff;
+      --ink-2:     #c3c2b7;
+      --muted:     #898781;
+      --grid:      #2c2c2a;
+      --baseline:  #383835;
+      --border:    rgba(255,255,255,0.10);
+      --good:      #0ca30c;
+      --bad:       #e66767;
+      --s-blue:    #3987e5;
+      --s-garnet:  #d84a77;
+      --s-gold:    #c98500;
+      --s-violet:  #9085e9;
+      --s-gray:    #898781;
+      --w0: #9ec5f4; --w1: #5598e7; --w2: #2a78d6; --w3: #184f95;
+      --wash:      rgba(255,255,255,0.06);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page:      #0d0d0d;
+    --surface:   #1a1a19;
+    --ink-1:     #ffffff;
+    --ink-2:     #c3c2b7;
+    --muted:     #898781;
+    --grid:      #2c2c2a;
+    --baseline:  #383835;
+    --border:    rgba(255,255,255,0.10);
+    --good:      #0ca30c;
+    --bad:       #e66767;
+    --s-blue:    #3987e5;
+    --s-garnet:  #d84a77;
+    --s-gold:    #c98500;
+    --s-violet:  #9085e9;
+    --s-gray:    #898781;
+    --w0: #9ec5f4; --w1: #5598e7; --w2: #2a78d6; --w3: #184f95;
+    --wash:      rgba(255,255,255,0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html { background: var(--page); }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink-1);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 20px 64px; }
+
+  header.report {
+    border-top: 4px solid;
+    border-image: linear-gradient(90deg, #2a78d6 0 50%, #c21e5c 50% 100%) 1;
+    padding: 28px 0 8px;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px;
+  }
+  .report h1 { font-size: 22px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  .report .period { color: var(--ink-2); }
+  .badge {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-2); border: 1px solid var(--border); border-radius: 999px;
+    padding: 3px 10px; background: var(--surface);
+  }
+  .lede { color: var(--ink-2); margin: 4px 0 28px; max-width: 62ch; }
+  .dlbtn { cursor: pointer; }
+  .dlbtn:hover { background: var(--wash); color: var(--ink-1); }
+  .dlbtn:focus-visible { outline: 2px solid var(--s-blue); outline-offset: 1px; }
+
+  /* плавающий фильтр языков/платформы */
+  .langbar {
+    position: fixed; right: 14px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 5px; align-items: stretch;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.10); z-index: 20;
+    max-height: 92vh; overflow-y: auto;
+  }
+  #lang-buttons, #plat-buttons { display: flex; flex-direction: column; gap: 5px; }
+  .lb-t { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); text-align: center; margin-bottom: 2px; }
+  .lb {
+    font: 600 12px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink-2); background: none; border: none; border-radius: 8px;
+    padding: 7px 10px; cursor: pointer; min-width: 46px; text-align: center;
+  }
+  .lb:hover { background: var(--wash); }
+  .lb:focus-visible { outline: 2px solid var(--s-blue); outline-offset: 1px; }
+  .lb.active { background: var(--s-blue); color: #fff; }
+  @media (max-width: 1260px) { .wrap { padding-right: 100px; } }
+
+  .clubbar {
+    position: fixed; left: 14px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 3px; align-items: stretch;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.10); z-index: 20;
+    max-height: 88vh; overflow-y: auto;
+  }
+  .cb {
+    font: 600 11.5px/1.15 system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink-2); background: none; border: none; border-radius: 8px;
+    padding: 6px 9px; cursor: pointer; text-align: left; white-space: nowrap;
+  }
+  .cb:hover { background: var(--wash); }
+  .cb:focus-visible { outline: 2px solid var(--s-blue); outline-offset: 1px; }
+  .cb.active { background: var(--s-blue); color: #fff; }
+  @media (max-width: 1440px) { .wrap { padding-left: 195px; } }
+
+  @media (max-width: 640px) {
+    .langbar { top: auto; bottom: 0; left: 0; right: 0; transform: none; width: auto;
+      flex-direction: row; justify-content: center; flex-wrap: wrap; gap: 4px;
+      border-radius: 12px 12px 0 0; padding: 8px 10px; max-height: none; }
+    #lang-buttons, #plat-buttons { display: contents; }
+    .lb-t { display: none; }
+    .clubbar { top: 0; bottom: auto; left: 0; right: 0; transform: none;
+      flex-direction: row; max-height: none; overflow-x: auto; overflow-y: hidden;
+      border-radius: 0 0 12px 12px; padding: 8px 10px; }
+    .cb-t { display: none; }
+    .wrap { padding-left: 20px; padding-right: 20px; padding-bottom: 84px; padding-top: 64px; }
+  }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px 12px;
+  }
+  .tile .lbl { font-size: 12px; color: var(--ink-2); }
+  .tile .val { font-size: 28px; font-weight: 600; margin: 2px 0 0; letter-spacing: -0.01em; }
+  .tile .delta { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+  .tile .delta.up   { color: var(--good); }
+  .tile .delta.down { color: var(--bad); }
+  .tile .delta .vs { color: var(--muted); font-weight: 400; }
+
+  section { margin: 40px 0 0; }
+  section > h2 { font-size: 17px; font-weight: 650; margin: 0 0 2px; }
+  section > .note { color: var(--ink-2); margin: 0 0 16px; max-width: 68ch; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  .span2 { grid-column: 1 / -1; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 16px 10px; position: relative;
+  }
+  .card h3 { font-size: 14px; font-weight: 650; margin: 0; }
+  .card .sub { font-size: 12px; color: var(--muted); margin: 1px 0 10px; }
+  .card .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .tbtn {
+    font: 600 11px/1 system-ui, sans-serif; color: var(--ink-2);
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 9px; cursor: pointer; white-space: nowrap;
+  }
+  .tbtn:hover { background: var(--wash); }
+  .tbtn:focus-visible { outline: 2px solid var(--s-blue); outline-offset: 1px; }
+  .actions { display: flex; gap: 6px; flex: none; align-items: flex-start; }
+  .pseg { display: flex; gap: 2px; border: 1px solid var(--border); border-radius: 7px; padding: 2px; }
+  .pseg button {
+    font: 600 10.5px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink-2); background: none; border: none; border-radius: 5px;
+    padding: 5px 8px; cursor: pointer;
+  }
+  .pseg button:hover { background: var(--wash); }
+  .pseg button.active { background: var(--s-blue); color: #fff; }
+  .pseg button:focus-visible { outline: 2px solid var(--s-blue); outline-offset: 1px; }
+  .ibtn { width: 27px; padding: 5px 0; text-align: center; font-weight: 700; }
+  .ibtn[aria-expanded="true"] { background: var(--s-blue); color: #fff; border-color: var(--s-blue); }
+  .info-p {
+    white-space: pre-line;
+    font-size: 12.5px; color: var(--ink-2); line-height: 1.5;
+    background: var(--wash); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; margin: 0 0 10px; max-width: 78ch;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 8px; font-size: 12px; color: var(--ink-2); }
+  .legend .it {
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer; user-select: none; border: none; background: none;
+    font: inherit; color: inherit; padding: 2px 4px; border-radius: 6px;
+  }
+  .legend .it:hover { background: var(--wash); }
+  .legend .it:focus-visible { outline: 2px solid var(--s-blue); outline-offset: 1px; }
+  .legend .it.off { opacity: 0.45; }
+  .legend .it.off .tx { text-decoration: line-through; }
+  .legend .sw { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .legend .sw.line { width: 14px; height: 2.5px; border-radius: 2px; }
+
+  .plot { position: relative; }
+  .plot svg { display: block; width: 100%; }
+
+  .tip {
+    position: absolute; pointer-events: none; z-index: 5; display: none;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.14); padding: 8px 10px; font-size: 12px;
+    min-width: 150px;
+  }
+  .tip .m { font-weight: 650; margin-bottom: 4px; }
+  .tip .r { display: flex; align-items: center; gap: 6px; justify-content: space-between; color: var(--ink-2); }
+  .tip .r b { color: var(--ink-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tip .k { display: inline-flex; align-items: center; gap: 6px; }
+  .tip .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+  .tta { display: flex; flex-direction: column; gap: 9px; margin: 6px 0 10px; }
+  .tta-row { display: flex; align-items: center; gap: 10px; }
+  .tta-name { width: 190px; flex: none; text-align: right; font-size: 12px; color: var(--ink-2); }
+  .tta-bar { flex: 1; display: flex; gap: 2px; height: 24px; border-radius: 6px; overflow: hidden; }
+  .tta-seg { display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 0; }
+  .tta-k { width: 108px; flex: none; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .tta-k .pct { color: var(--muted); }
+  .tta-g { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); margin: 8px 0 0; }
+  @media (max-width: 640px) { .tta-name { width: 120px; } }
+
+  footer { margin-top: 48px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--grid); padding-top: 14px; }
+
+  svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .axis-t { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .dlabel { font-size: 11px; font-weight: 600; fill: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .dl2 { font-size: 9.5px; font-weight: 600; fill: var(--ink-2); font-variant-numeric: tabular-nums;
+    paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+  .dlin { font-size: 9px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ---------- екран завантаження файлів ---------- */
+  #upload-screen { max-width: 720px; margin: 0 auto; padding: 48px 20px 80px; }
+  #upload-screen h1 { font-size: 22px; font-weight: 650; margin: 0 0 6px; }
+  #upload-screen .lede { margin-bottom: 28px; }
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 14px; padding: 36px 20px;
+    text-align: center; cursor: pointer; background: var(--surface);
+    transition: border-color .15s, background .15s;
+  }
+  .dropzone:hover, .dropzone.drag { border-color: var(--s-blue); background: var(--wash); }
+  .dropzone .dz-t { font-weight: 650; font-size: 15px; margin-bottom: 4px; }
+  .dropzone .dz-s { color: var(--ink-2); font-size: 12.5px; }
+  #file-input { display: none; }
+
+  .src-list { display: flex; flex-direction: column; gap: 8px; margin: 24px 0; }
+  .src-row {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 9px;
+  }
+  .src-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+  .src-row.ok .src-dot { background: var(--good); }
+  .src-name { font-weight: 600; font-size: 13px; flex: 1; }
+  .src-count { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .src-periods { font-size: 11px; color: var(--muted); max-width: 320px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .unknown-box {
+    margin: 12px 0; padding: 10px 14px; border-radius: 9px;
+    background: var(--wash); border: 1px solid var(--border); font-size: 12.5px; color: var(--bad);
+  }
+
+  .gen-btn {
+    font: 650 14px/1 system-ui, sans-serif; color: #fff; background: var(--s-blue);
+    border: none; border-radius: 9px; padding: 13px 22px; cursor: pointer; width: 100%;
+    margin-top: 8px;
+  }
+  .gen-btn:disabled { background: var(--baseline); cursor: not-allowed; }
+  .gen-btn:not(:disabled):hover { filter: brightness(1.06); }
+
+  /* ---------- дата-контроли, розміщені прямо над секцією/візуалізацією, яку вони керують ---------- */
+  .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+  #range-head { margin: 24px 0 0; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .sec-head h2 { margin: 0; }
+  .dctl-inline { display: flex; align-items: center; gap: 6px; }
+  .dctl-inline select {
+    font: 600 12px/1 system-ui, sans-serif; color: var(--ink-1); background: var(--page);
+    border: 1px solid var(--border); border-radius: 7px; padding: 5px 7px; cursor: pointer;
+  }
+  .dctl-inline .sep { color: var(--muted); font-size: 12px; }
+
+  #report-screen { display: none; }
+  .backlink { font-size: 12px; color: var(--ink-2); cursor: pointer; background: none; border: none; padding: 0; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- ===================== ЕКРАН ЗАВАНТАЖЕННЯ ФАЙЛІВ ===================== -->
+<div id="upload-screen">
+  <h1>Club Apps — конструктор звіту (DA-320)</h1>
+  <p class="lede">Завантаж CSV-вивантаження з 5 Redash-запитів (11967 Аудитория, 11968 Time to Activation, 11971 Читатели, 11972 Реакции, 11973 Авторы). Джерело кожного файлу визначається автоматично за колонками — можна перетягнути все одразу в одну зону, у будь-якому порядку, скільки завгодно місяців. Дозаливати нові місяці можна пізніше — просто перетягни ще файли і сформуй звіт наново.</p>
+
+  <div class="dropzone" id="dropzone">
+    <div class="dz-t">Перетягни CSV сюди, або клікни щоб обрати файли</div>
+    <div class="dz-s">Можна кілька файлів одразу, з різних запитів і різних місяців</div>
+    <input type="file" id="file-input" accept=".csv" multiple>
+  </div>
+
+  <div class="src-list" id="src-list"></div>
+  <div class="unknown-box" id="unknown-box" style="display:none"></div>
+
+  <button class="gen-btn" id="gen-btn" disabled>Сформувати звіт</button>
+</div>
+
+<!-- ===================== ЕКРАН ЗВІТУ ===================== -->
+<div id="report-screen">
+  <nav class="clubbar" id="clubbar" aria-label="Фільтр по клубу">
+    <span class="lb-t cb-t">Клуб</span>
+  </nav>
+  <nav class="langbar" id="langbar" aria-label="Фільтр по мові та платформі">
+    <span class="lb-t">Мова</span>
+    <div id="lang-buttons"></div>
+    <span class="lb-t" style="margin-top:8px">Платформа</span>
+    <div id="plat-buttons"></div>
+  </nav>
+  <div class="wrap">
+    <button class="backlink" id="back-btn">← додати ще файли</button>
+    <header class="report">
+      <h1 id="club-title">Total Clubs</h1>
+      <span class="period" id="report-period"></span>
+      <button class="badge dlbtn" id="dl-html" title="Зберегти звіт як самодостатній HTML-файл">⬇ HTML</button>
+      <button class="badge dlbtn" id="dl-pdf" title="Друк / збереження як PDF">⬇ PDF</button>
+    </header>
+
+    <div class="sec-head" id="range-head">
+      <div class="dctl-inline">
+        <label for="dc-from">Діапазон:</label>
+        <select id="dc-from"></select><span class="sep">—</span><select id="dc-to"></select>
+      </div>
+      <span class="note" style="margin:0">керує трендовими картками нижче: Аудитория, Читателі, Реакції, Автори</span>
+    </div>
+
+    <section id="sec-kpi">
+      <div class="sec-head">
+        <h2>Ключові показники</h2>
+        <div class="dctl-inline"><label for="dc-kpi">Поточний місяць:</label><select id="dc-kpi"></select></div>
+      </div>
+      <div class="tiles" id="kpi-tiles"></div>
+    </section>
+
+    <section id="sec-aud">
+      <h2>Аудитория</h2>
+      <div class="grid2">
+        <div class="card span2" id="c-aud-mau"></div>
+      </div>
+    </section>
+
+    <section id="sec-tta">
+      <div class="sec-head">
+        <h2>Time to Activation</h2>
+        <div class="dctl-inline"><label for="dc-tta">Когорта інсталів:</label><select id="dc-tta"></select></div>
+      </div>
+      <div class="grid2">
+        <div class="card span2" id="c-tta"></div>
+      </div>
+    </section>
+
+    <section id="sec-read">
+      <h2>Читатели</h2>
+      <div class="grid2">
+        <div class="card span2" id="c-read-mix"></div>
+        <div class="card span2" id="c-read-share"></div>
+        <div class="card span2" id="c-read-reach"></div>
+        <div class="card span2" id="c-read-mau"></div>
+      </div>
+    </section>
+
+    <section id="sec-react">
+      <h2>Реакции</h2>
+      <div class="grid2">
+        <div class="card" id="c-react-posts"></div>
+        <div class="card" id="c-react-comments"></div>
+        <div class="card span2" id="c-react-threads"></div>
+        <div class="card span2" id="c-react-stick"></div>
+      </div>
+    </section>
+
+    <section id="sec-auth">
+      <h2>Авторы</h2>
+      <div class="grid2">
+        <div class="card span2" id="c-auth-chats"></div>
+        <div class="card" id="c-auth-comments"></div>
+        <div class="card" id="c-auth-posts"></div>
+        <div class="card span2" id="c-auth-threads"></div>
+        <div class="card span2" id="c-auth-stick"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ===================== CSV-парсер (RFC4180-подібний) ===================== */
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (inQuotes){
+      if (c === '"'){
+        if (text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ','){ row.push(field); field = ''; }
+      else if (c === '\r'){ /* skip */ }
+      else if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else field += c;
+    }
+  }
+  if (field.length || row.length){ row.push(field); rows.push(row); }
+  if (rows.length && rows[rows.length-1].length === 1 && rows[rows.length-1][0] === '') rows.pop();
+  if (!rows.length) return [];
+  const header = rows[0];
+  const numRe = /^-?\d+(\.\d+)?$/;
+  return rows.slice(1).map(r=>{
+    const obj = {};
+    header.forEach((h,i)=>{
+      let v = r[i];
+      if (v === undefined || v === '') { obj[h] = (v===''?'':null); return; }
+      if (v === 'None' || v === 'null' || v === 'NaN') { obj[h] = null; return; }
+      obj[h] = numRe.test(v) ? Number(v) : v;
+    });
+    return obj;
+  });
+}
+
+/* ===================== автовизначення джерела за колонками ===================== */
+const SOURCES = {
+  aud:   {label:'Аудитория (11967)',  key:'aud'},
+  tta:   {label:'Time to Activation (11968)', key:'tta'},
+  read:  {label:'Читатели (11971)',   key:'read'},
+  react: {label:'Реакции (11972)',    key:'react'},
+  auth:  {label:'Авторы (11973)',     key:'auth'},
+};
+
+function detectSource(header){
+  const has = c => header.includes(c);
+  if (has('wk') && has('metric_name') && has('cohort_size') && has('period')) return 'tta';
+  if (has('segment') && has('authors_chat')) return 'auth';
+  if (has('segment') && has('reacting_users_posts')) return 'react';
+  if (has('segment') && has('readers_news')) return 'read';
+  if (has('mau_new') && has('mau_returning') && !has('segment')) return 'aud';
+  return null;
+}
+
+/* ===================== накопичення даних ===================== */
+/* Map, не масив: ключ — композитний ідентифікатор рядка (місяць+клуб+мова+платформа[+segment/wk/metric]).
+   Повторне завантаження CSV за той самий місяць (перевиконаний запит) перезаписує старий рядок
+   замість дублювання — інакше суми/KPI задвоїлись би при випадковому повторному дропі файлу. */
+const store = { aud: new Map(), tta: new Map(), read: new Map(), react: new Map(), auth: new Map() };
+const loadedFiles = { aud: [], tta: [], read: [], react: [], auth: [] };
+let unknownFiles = [];
+function all(src){ return Array.from(store[src].values()); }
+
+/* period TTA приходить як 'YYYY-MM' (Python strftime), а month з інших запитів —
+   як 'YYYY-MM-01' (ClickHouse toStartOfMonth). Приводимо до єдиного формату 'YYYY-MM-01',
+   інакше спільний пікер KPI+TTA дублює місяці й TTA не знаходить рядки за обраний місяць. */
+function normMonth(v){
+  if (v == null) return v;
+  const s = String(v);
+  return /^\d{4}-\d{2}$/.test(s) ? s + '-01' : s;
+}
+
+function rowKey(src, row){
+  const base = [periodKeyOf(src, row), row.app_name, row.language, row.platform];
+  if (src === 'tta') base.push(row.wk, row.metric_name);
+  else if (src !== 'aud') base.push(row.segment);
+  return base.join('|');
+}
+
+function periodKeyOf(src, row){
+  return normMonth(src === 'tta' ? row.period : row.month);
+}
+
+function ingestFile(name, rows){
+  if (!rows.length) return { src:null, name };
+  const header = Object.keys(rows[0]);
+  const src = detectSource(header);
+  if (!src) return { src:null, name };
+  rows.forEach(r=> store[src].set(rowKey(src, r), r));
+  loadedFiles[src].push({ name, n: rows.length, periods: Array.from(new Set(rows.map(r=>periodKeyOf(src,r)))).sort() });
+  return { src, name, n: rows.length };
+}
+
+function renderSrcList(){
+  const list = document.getElementById('src-list');
+  list.innerHTML = '';
+  Object.keys(SOURCES).forEach(src=>{
+    const files = loadedFiles[src];
+    const row = document.createElement('div');
+    row.className = 'src-row' + (files.length ? ' ok' : '');
+    const totalRows = files.reduce((a,f)=>a+f.n,0);
+    const periods = Array.from(new Set(files.flatMap(f=>f.periods))).sort();
+    row.innerHTML = `<span class="src-dot"></span>
+      <span class="src-name">${SOURCES[src].label}</span>
+      <span class="src-count">${files.length ? (files.length+' файл(ів), '+totalRows+' рядків') : 'очікується'}</span>
+      <span class="src-periods">${periods.join(', ')}</span>`;
+    list.appendChild(row);
+  });
+  const ub = document.getElementById('unknown-box');
+  if (unknownFiles.length){
+    ub.style.display = 'block';
+    ub.textContent = 'Не вдалось розпізнати джерело для: ' + unknownFiles.join(', ') + ' — перевір, що це вивантаження саме з одного з 5 запитів DA-320 без ручних змін заголовків.';
+  } else {
+    ub.style.display = 'none';
+  }
+  document.getElementById('gen-btn').disabled = !Object.values(loadedFiles).some(f=>f.length);
+}
+
+function handleFiles(fileList){
+  const files = Array.from(fileList).filter(f=>/\.csv$/i.test(f.name));
+  let pending = files.length;
+  if (!pending) return;
+  files.forEach(f=>{
+    const reader = new FileReader();
+    reader.onload = () => {
+      const rows = parseCSV(reader.result);
+      const res = ingestFile(f.name, rows);
+      if (!res.src) unknownFiles.push(f.name);
+      pending--;
+      if (pending === 0) renderSrcList();
+    };
+    reader.readAsText(f, 'utf-8');
+  });
+}
+
+const dz = document.getElementById('dropzone');
+const fi = document.getElementById('file-input');
+dz.addEventListener('click', ()=>fi.click());
+fi.addEventListener('change', ()=>{ handleFiles(fi.files); fi.value=''; });
+['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', e=>{ if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+
+/* ===================== побудова моделі даних D ===================== */
+let D = null;
+
+function buildModel(){
+  const aud = all('aud'), read = all('read'), react = all('react'), auth = all('auth'), tta = all('tta');
+  const periods = Array.from(new Set([
+    ...aud.map(r=>r.month), ...read.map(r=>r.month),
+    ...react.map(r=>r.month), ...auth.map(r=>r.month),
+  ].filter(Boolean))).sort();
+  const ttaPeriods = Array.from(new Set(tta.map(r=>normMonth(r.period)).filter(Boolean))).sort();
+
+  const apps = Array.from(new Set([
+    ...aud.map(r=>r.app_name), ...read.map(r=>r.app_name),
+    ...react.map(r=>r.app_name), ...auth.map(r=>r.app_name),
+    ...tta.map(r=>r.app_name),
+  ].filter(Boolean)));
+  const langs = Array.from(new Set([
+    ...aud.map(r=>r.language), ...read.map(r=>r.language),
+    ...react.map(r=>r.language), ...auth.map(r=>r.language),
+  ].filter(v=>v && v!=='Все')));
+  const platforms = Array.from(new Set([
+    ...aud.map(r=>r.platform), ...read.map(r=>r.platform),
+    ...react.map(r=>r.platform), ...auth.map(r=>r.platform),
+  ].filter(v=>v && v!=='Все')));
+
+  return { periods, ttaPeriods, apps, langs, platforms };
+}
+
+/* ===================== 2 глобальні дата-контроли =====================
+   Діапазон — для трендових карток (11967/71/72/73).
+   Місяць KPI+TTA — єдине місце в звіті, де показується інфо по одному місяцю
+   (плитки зверху + Time to Activation), тому окремого "знімкового" контролу нема. */
+const dateState = { rangeFrom:null, rangeTo:null, kpiMonth:null, ttaMonth:null };
+
+/* ===================== фільтр клуб/мова/платформа (плаваючі панелі) =====================
+   TTA (11968) використовує сентинел 'ALL' для "усі мови/платформи", решта запитів — 'Все' —
+   ті самі значення мов/платформ (EN/IT/.../Android/iOS) співпадають дослівно між джерелами. */
+const state = { club:'Total Clubs', lang:'Все', platform:'Все' };
+function langFor(src){ return state.lang==='Все' ? (src==='tta' ? 'ALL' : 'Все') : state.lang; }
+function platFor(src){ return state.platform==='Все' ? (src==='tta' ? 'ALL' : 'Все') : state.platform; }
+/* 'Все'/'Вернулись'/'UK' — сентинел/мовні значення прямо з даних запитів (не можна просто перейменувати).
+   На кнопках показуємо граматично правильні "Всі"/"Повернулись", і "UA" замість "UK" (ISO-код uk=українська,
+   але в інтерфейсі виглядає як Великобританія) — значення для порівняння лишається як у даних. */
+function dispLabel(v){ return v==='Все' ? 'Всі' : v==='Вернулись' ? 'Повернулись' : v==='UK' ? 'UA' : v; }
+/* алфавітно, але "Other" (каталог-заглушка з multiIf у запитах) завжди останній, не за алфавітом */
+function sortWithOtherLast(arr){
+  return arr.slice().sort((a,b)=>{
+    if (a==='Other') return 1;
+    if (b==='Other') return -1;
+    return a.localeCompare(b);
+  });
+}
+
+function renderFilterBars(){
+  document.getElementById('club-title').textContent = state.club;
+
+  const clubbar = document.getElementById('clubbar');
+  clubbar.querySelectorAll('.cb').forEach(b=>b.remove());
+  const clubs = ['Total Clubs', ...D.apps.filter(a=>a!=='Total Clubs').sort()];
+  if (!clubs.includes(state.club)) state.club = 'Total Clubs';
+  clubs.forEach(c=>{
+    const b = document.createElement('button');
+    b.className = 'cb' + (c===state.club ? ' active' : '');
+    b.textContent = c;
+    b.setAttribute('aria-pressed', c===state.club);
+    b.onclick = ()=>{ state.club = c; renderFilterBars(); refresh(); };
+    clubbar.appendChild(b);
+  });
+
+  const langBox = document.getElementById('lang-buttons');
+  const langs = ['Все', ...sortWithOtherLast(D.langs)];
+  if (!langs.includes(state.lang)) state.lang = 'Все';
+  langBox.innerHTML = '';
+  langs.forEach(l=>{
+    const b = document.createElement('button');
+    b.className = 'lb' + (l===state.lang ? ' active' : '');
+    b.textContent = dispLabel(l);
+    b.setAttribute('aria-pressed', l===state.lang);
+    b.onclick = ()=>{ state.lang = l; renderFilterBars(); refresh(); };
+    langBox.appendChild(b);
+  });
+
+  const platBox = document.getElementById('plat-buttons');
+  const plats = ['Все', ...sortWithOtherLast(D.platforms)];
+  if (!plats.includes(state.platform)) state.platform = 'Все';
+  platBox.innerHTML = '';
+  plats.forEach(p=>{
+    const b = document.createElement('button');
+    b.className = 'lb' + (p===state.platform ? ' active' : '');
+    b.textContent = dispLabel(p);
+    b.setAttribute('aria-pressed', p===state.platform);
+    b.onclick = ()=>{ state.platform = p; renderFilterBars(); refresh(); };
+    platBox.appendChild(b);
+  });
+}
+
+function fmtMonthLabel(m){
+  if (!m) return '';
+  const d = new Date(m + (m.length===7 ? '-01' : ''));
+  if (isNaN(d)) return m;
+  return d.toLocaleDateString('uk-UA', { month:'short', year:'2-digit' });
+}
+
+const opt = (v) => `<option value="${v}">${fmtMonthLabel(v)}</option>`;
+
+/* контроль "поточний місяць" — у заголовку секції KPI */
+function renderKpiControl(){
+  const per = D.periods;
+  dateState.kpiMonth = dateState.kpiMonth && per.includes(dateState.kpiMonth) ? dateState.kpiMonth : per[per.length-1];
+  const sel = document.getElementById('dc-kpi');
+  sel.innerHTML = per.map(p=>opt(p)).join('');
+  sel.value = dateState.kpiMonth;
+  sel.onchange = e=>{ dateState.kpiMonth = e.target.value; refresh(); };
+}
+
+/* контроль "когорта інсталів" — у заголовку секції Time to Activation, незалежний від KPI-місяця */
+function renderTtaControl(){
+  const per = D.ttaPeriods;
+  const sec = document.getElementById('sec-tta');
+  if (!per.length){
+    sec.style.display = 'none';
+    return;
+  }
+  sec.style.display = '';
+  dateState.ttaMonth = dateState.ttaMonth && per.includes(dateState.ttaMonth) ? dateState.ttaMonth : per[per.length-1];
+  const sel = document.getElementById('dc-tta');
+  sel.innerHTML = per.map(p=>opt(p)).join('');
+  sel.value = dateState.ttaMonth;
+  sel.onchange = e=>{ dateState.ttaMonth = e.target.value; refresh(); };
+}
+
+/* контроль діапазону — у заголовку секції Аудитория, керує всіма трендовими картками звіту */
+function renderRangeControl(){
+  const per = D.periods;
+  dateState.rangeFrom = dateState.rangeFrom && per.includes(dateState.rangeFrom) ? dateState.rangeFrom : per[0];
+  dateState.rangeTo = dateState.rangeTo && per.includes(dateState.rangeTo) ? dateState.rangeTo : per[per.length-1];
+  const from = document.getElementById('dc-from'), to = document.getElementById('dc-to');
+  from.innerHTML = per.map(p=>opt(p)).join('');
+  to.innerHTML = per.map(p=>opt(p)).join('');
+  from.value = dateState.rangeFrom;
+  to.value = dateState.rangeTo;
+  from.onchange = e=>{ dateState.rangeFrom = e.target.value; refresh(); };
+  to.onchange = e=>{ dateState.rangeTo = e.target.value; refresh(); };
+}
+
+function trendRange(){
+  const per = D.periods;
+  let a = per.indexOf(dateState.rangeFrom), b = per.indexOf(dateState.rangeTo);
+  if (a < 0) a = 0; if (b < 0) b = per.length-1;
+  if (a > b) [a,b] = [b,a];
+  return per.slice(a, b+1);
+}
+
+/* ===================== SVG-рушій графіків (порт з barca-report.html) ===================== */
+const nf = new Intl.NumberFormat('uk-UA');
+const fmtInt = v => nf.format(Math.round(v));
+const fmtCompact = v => v>=1e6 ? (v/1e6).toLocaleString('uk-UA',{maximumFractionDigits:1})+' млн'
+  : v>=1000 ? (v/1000).toLocaleString('uk-UA',{maximumFractionDigits:1})+' тис.' : nf.format(v);
+const fmtPct = v => v.toLocaleString('uk-UA')+'%';
+const fmtDec = v => v.toLocaleString('uk-UA',{maximumFractionDigits:1});
+const fmtShort = v => {
+  const a = Math.abs(v);
+  if (a>=1e6) return (v/1e6).toLocaleString('uk-UA',{maximumFractionDigits:1})+'М';
+  if (a>=10000) return Math.round(v/1000).toLocaleString('uk-UA')+'к';
+  if (a>=1000) return (v/1000).toLocaleString('uk-UA',{maximumFractionDigits:1})+'к';
+  return nf.format(Math.round(v));
+};
+function niceMax(v){
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1,1.5,2,2.5,3,4,5,6,8,10]) if (m*p >= v) return m*p;
+  return 10*p;
+}
+function cvar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+const SVG_NS = n => document.createElementNS('http://www.w3.org/2000/svg', n);
+function seg(parent,n,attrs){ const el=SVG_NS(n); for(const k in attrs) el.setAttribute(k,attrs[k]); parent.appendChild(el); return el; }
+function roundedTop(x,y,w,h,r){
+  r = Math.min(r, h/2, w/2);
+  return `M${x},${y+h} L${x},${y+r} Q${x},${y} ${x+r},${y} L${x+w-r},${y} Q${x+w},${y} ${x+w},${y+r} L${x+w},${y+h} Z`;
+}
+
+/* поточна вісь X трендових карток — коротко підписані місяці обраного діапазону */
+let M = [];
+const cardHidden = {};
+function hiddenSet(id){ return cardHidden[id] || (cardHidden[id] = new Set()); }
+
+function render(el, cfg){
+  const hid = hiddenSet(el.id);
+  const barsAll  = cfg.series;
+  const linesAll = cfg.lines || [];
+  const bars  = barsAll.filter(s=>!hid.has(s.n));
+  const lines = linesAll.filter(s=>!hid.has(s.n));
+
+  el.innerHTML = '';
+  const head = document.createElement('div'); head.className='head';
+  head.innerHTML = `<div><h3>${cfg.title}</h3><div class="sub">${cfg.sub||''}</div></div>`;
+  let infoP = null;
+  if (cfg.seg || cfg.info){
+    const act = document.createElement('div'); act.className='actions';
+    if (cfg.seg){
+      const pseg = document.createElement('div'); pseg.className='pseg';
+      cfg.seg.options.forEach(opt=>{
+        const b = document.createElement('button');
+        b.textContent = dispLabel(opt);
+        b.className = opt===cfg.seg.current ? 'active' : '';
+        b.onclick = ()=>cfg.seg.onChange(opt);
+        pseg.appendChild(b);
+      });
+      act.appendChild(pseg);
+    }
+    if (cfg.info){
+      const ib = document.createElement('button'); ib.className='tbtn ibtn';
+      ib.textContent='i'; ib.title='Що хочемо побачити на цьому графіку';
+      ib.setAttribute('aria-label','Опис графіка'); ib.setAttribute('aria-expanded','false');
+      ib.onclick = ()=>{ const on = infoP.style.display==='none';
+        infoP.style.display = on?'block':'none'; ib.setAttribute('aria-expanded', on); };
+      act.appendChild(ib);
+    }
+    head.appendChild(act);
+  }
+  el.appendChild(head);
+  if (cfg.info){
+    infoP = document.createElement('div'); infoP.className='info-p';
+    infoP.style.display='none'; infoP.textContent = cfg.info;
+    el.appendChild(infoP);
+  }
+
+  const leg = document.createElement('div'); leg.className='legend';
+  const legItem = (s, isLine) => {
+    const b = document.createElement('button');
+    b.className = 'it'+(hid.has(s.n)?' off':'');
+    b.setAttribute('aria-pressed', !hid.has(s.n));
+    b.title = 'Показати/сховати на графіку';
+    b.innerHTML = `<span class="sw ${isLine?'line':''}" style="background:${cvar(s.c)}"></span><span class="tx">${s.n}</span>`;
+    b.onclick = ()=>{ hid.has(s.n) ? hid.delete(s.n) : hid.add(s.n); render(el, cfg); };
+    leg.appendChild(b);
+  };
+  barsAll.forEach(s=>legItem(s, cfg.type==='line'));
+  linesAll.forEach(s=>legItem(s, true));
+  el.appendChild(leg);
+
+  const plot = document.createElement('div'); plot.className='plot';
+  el.appendChild(plot);
+  const W = Math.max(320, el.clientWidth - 34);
+  const plotH = cfg.h || 210, axH = 22, totalH = plotH + axH;
+  const ticks = 4;
+
+  let maxV;
+  if (cfg.type==='stack') maxV = Math.max(0,...M.map((_,i)=>bars.reduce((a,s)=>a+(s.v[i]||0),0)));
+  else maxV = Math.max(0,...bars.flatMap(s=>s.v.filter(v=>v!=null)));
+  if (!isFinite(maxV) || maxV<=0) maxV = 1;
+  const yMax = cfg.yMax || niceMax(maxV*1.05/ticks)*ticks;
+  const y = v => plotH - (v/yMax)*(plotH-18);
+  const fmtAx = cfg.fmtAxis || fmtCompact;
+  const longest = Math.max(...Array.from({length:ticks+1},(_,t)=>fmtAx(yMax*t/ticks).length));
+  const ml = Math.max(40, Math.round(longest*6.6)+14);
+
+  const rLinesAll = linesAll.filter(s=>!s.leftAxis);
+  const rLines = lines.filter(s=>!s.leftAxis);
+  let rMax = 0, ry = null, mr = 14;
+  if (rLinesAll.length){
+    const lm = Math.max(0,...(rLines.length?rLines:rLinesAll).flatMap(s=>s.v.filter(v=>v!=null)));
+    rMax = cfg.rMax || niceMax(Math.max(lm,0.001)*1.1/ticks)*ticks;
+    ry = v => plotH - (v/rMax)*(plotH-18);
+    const rf = rLinesAll[0].fmt;
+    const rlong = Math.max(...Array.from({length:ticks+1},(_,t)=>rf(rMax*t/ticks).length));
+    mr = Math.max(34, Math.round(rlong*6.6)+14);
+  }
+  const innerW = W - ml - mr;
+  const band = innerW / M.length;
+
+  const svg = seg(plot,'svg',{viewBox:`0 0 ${W} ${totalH}`, width:W, height:totalH, role:'img', 'aria-label':cfg.title});
+
+  for(let t=0;t<=ticks;t++){
+    const val = yMax*t/ticks, yy = y(val);
+    seg(svg,'line',{x1:ml,x2:W-mr,y1:yy,y2:yy,stroke:t===0?cvar('--baseline'):cvar('--grid'),'stroke-width':1});
+    seg(svg,'text',{x:ml-8,y:yy+4,'text-anchor':'end',class:'axis-t'}).textContent = fmtAx(val);
+    if (rLinesAll.length && rLines.length)
+      seg(svg,'text',{x:W-mr+8,y:yy+4,'text-anchor':'start',class:'axis-t'}).textContent = rLinesAll[0].fmt(rMax*t/ticks);
+  }
+  M.forEach((m,i)=>{
+    seg(svg,'text',{x:ml+band*(i+0.5),y:plotH+16,'text-anchor':'middle',class:'axis-t'}).textContent=m;
+  });
+
+  const PL = [];
+  if (cfg.type==='stack' && bars.length){
+    const barW = Math.min(24, band*0.55);
+    const totals = M.map((_,i)=>bars.reduce((a,s)=>a+(s.v[i]||0),0));
+    M.forEach((_,i)=>{
+      const x = ml + band*(i+0.5) - barW/2;
+      let cum = 0;
+      bars.forEach((s,si)=>{
+        const v = s.v[i]; if(!v || v<=0){return;}
+        const yTop = y(cum+v), yBot = y(cum);
+        let bot = si===0 ? yBot : yBot-2;
+        let h = Math.max(bot-yTop, 1.5);
+        const isTop = si===bars.length-1 || bars.slice(si+1).every(ss=>!ss.v[i] || ss.v[i]<=0);
+        if (isTop) seg(svg,'path',{d:roundedTop(x,bot-h,barW,h,4),fill:cvar(s.c)});
+        else seg(svg,'rect',{x, y:bot-h, width:barW, height:h, fill:cvar(s.c)});
+        if (h>=13 && barW>=20 && !(bars.length<=2 && linesAll.length && !cfg.noTotal)){
+          PL.push({x:x+barW/2, y:cfg.inLabelTop ? bot-h+12 : bot-h/2+3, cls:'dlin',
+            fill:(s.c==='--s-gold')?'#1c1c1a':'#ffffff', t:(cfg.fmtIn||fmtShort)(v)});
+        }
+        cum += v;
+      });
+      if (!cfg.noTotal)
+        PL.push({x:ml+band*(i+0.5), y:y(totals[i])-5, cls:'dl2', t:fmtShort(totals[i])});
+    });
+  } else if (cfg.type==='group' && bars.length){
+    const n = bars.length;
+    const barW = Math.min(16, (band*0.72 - 2*(n-1))/n);
+    const groupW = n*barW + 2*(n-1);
+    M.forEach((_,i)=>{
+      let x = ml + band*(i+0.5) - groupW/2;
+      bars.forEach((s,si)=>{
+        const v = s.v[i];
+        if (v>0){
+          const h = Math.max(y(0)-y(v), 1.5);
+          seg(svg,'path',{d:roundedTop(x, y(0)-h, barW, h, 3),fill:cvar(s.c)});
+          PL.push({x:x+barW/2, y:y(0)-h-4-(si%2?10:0), cls:'dl2', t:(cfg.fmtLabel||fmtShort)(v)});
+        }
+        x += barW + 2;
+      });
+    });
+  } else if (cfg.type==='line'){
+    bars.forEach((s,si)=>{
+      const pts = [];
+      s.v.forEach((v,i)=>{ if(v!=null) pts.push([ml+band*(i+0.5), y(v), v]); });
+      if (!pts.length) return;
+      seg(svg,'path',{d:'M'+pts.map(p=>p[0]+','+p[1]).join(' L'),fill:'none',
+        stroke:cvar(s.c),'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'});
+      const [ex,ey] = pts[pts.length-1];
+      seg(svg,'circle',{cx:ex,cy:ey,r:6,fill:cvar('--surface')});
+      seg(svg,'circle',{cx:ex,cy:ey,r:4,fill:cvar(s.c)});
+      pts.forEach(([px,py,v])=>{
+        PL.push({x:px, y:py + (si%2===0?-9:17), cls:'dl2', t:cfg.fmtVal(v)});
+      });
+    });
+  }
+
+  lines.forEach((s,si)=>{
+    const yFn = s.leftAxis ? y : ry;
+    const pts = [];
+    s.v.forEach((v,i)=>{ if(v!=null) pts.push([ml+band*(i+0.5), yFn(v), v]); });
+    if (!pts.length) return;
+    seg(svg,'path',{d:'M'+pts.map(p=>p[0]+','+p[1]).join(' L'),fill:'none',
+      stroke:cvar(s.c),'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'});
+    if (s.dots) pts.forEach(([px,py])=>{
+      seg(svg,'circle',{cx:px,cy:py,r:6,fill:cvar('--surface')});
+      seg(svg,'circle',{cx:px,cy:py,r:4,fill:cvar(s.c)});
+    });
+    const [ex,ey] = pts[pts.length-1];
+    seg(svg,'circle',{cx:ex,cy:ey,r:6,fill:cvar('--surface')});
+    seg(svg,'circle',{cx:ex,cy:ey,r:4,fill:cvar(s.c)});
+    pts.forEach(([px,py,v])=>{
+      const off = s.lab==='below' ? 18 : s.lab==='above' ? -10 : (si%2===0?-10:18);
+      PL.push({x:px, y:py + off, cls:'dl2', t:s.fmt(v)});
+    });
+  });
+
+  PL.forEach(p=>{
+    const t = seg(svg,'text',{x:p.x, y:p.y, 'text-anchor':'middle', class:p.cls});
+    if (p.fill) t.setAttribute('fill', p.fill);
+    t.textContent = p.t;
+  });
+
+  const tip = document.createElement('div'); tip.className='tip'; plot.appendChild(tip);
+  const hl = seg(svg,'rect',{x:0,y:0,width:band,height:plotH,fill:cvar('--wash'),opacity:0,'pointer-events':'none'});
+  svg.addEventListener('mousemove', e=>{
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (W / r.width);
+    const i = Math.max(0, Math.min(M.length-1, Math.floor((px-ml)/band)));
+    hl.setAttribute('x', ml+band*i); hl.setAttribute('opacity',1);
+    let rows = bars.map(s=>
+      `<div class="r"><span class="k"><span class="sw" style="background:${cvar(s.c)}"></span>${s.n}</span><b>${s.v[i]==null?'—':cfg.fmtVal(s.v[i])}</b></div>`);
+    if (cfg.type==='stack' && bars.length>1 && !cfg.noTotal){
+      const tot = bars.reduce((a,s)=>a+(s.v[i]||0),0);
+      rows.push(`<div class="r"><span class="k">Всього</span><b>${cfg.fmtVal(tot)}</b></div>`);
+    }
+    lines.forEach(s=>rows.push(
+      `<div class="r"><span class="k"><span class="sw" style="background:${cvar(s.c)}"></span>${s.short||s.n}</span><b>${s.v[i]==null?'—':s.fmt(s.v[i])}</b></div>`));
+    tip.innerHTML = `<div class="m">${M[i]}</div>` + rows.join('');
+    tip.style.display='block';
+    const pr = plot.getBoundingClientRect();
+    let tx = e.clientX - pr.left + 14;
+    if (tx + 190 > pr.width) tx = e.clientX - pr.left - 200;
+    tip.style.left = tx+'px';
+    tip.style.top = (e.clientY - pr.top + 10)+'px';
+  });
+  svg.addEventListener('mouseleave', ()=>{ tip.style.display='none'; hl.setAttribute('opacity',0); });
+}
+
+/* ===================== Аудитория: тренд MAU/нові/вернувшиеся + 3 stickiness ===================== */
+function seriesFor(rows, range, key, filterFn){
+  return range.map(month=>{
+    const r = rows.find(x=>x.month===month && filterFn(x));
+    return r ? r[key] : null;
+  });
+}
+
+function renderAudTrend(){
+  const el = document.getElementById('c-aud-mau');
+  if (!el) return;
+  const range = trendRange();
+  M = range.map(fmtMonthLabel);
+  const rows = all('aud');
+  const f = x => x.app_name===state.club && x.language===langFor('aud') && x.platform===platFor('aud');
+  if (!rows.some(f)){
+    el.innerHTML = '<div class="head"><div><h3>MAU: всього, нові та повернулись</h3><div class="sub">немає даних 11967 за обраний діапазон</div></div></div>';
+    return;
+  }
+  render(el, {
+    title: 'MAU: всього, нові та повернулись',
+    info: '• З чого складається MAU: внесок нових і повернулих.\n• Якість нових користувачів — їхній stickiness.\n• Чи формує застосунок звичку у старих користувачів — stickiness повернулих.',
+    sub: 'стовпці — людей за місяць; лінія — stickiness DAU/MAU, права вісь',
+    type: 'group', h: 230,
+    series: [
+      { n:'Всього (MAU)', c:'--s-blue', v: seriesFor(rows, range, 'mau', f) },
+      { n:'Нові', c:'--s-gold', v: seriesFor(rows, range, 'mau_new', f) },
+      { n:'Повернулись', c:'--s-garnet', v: seriesFor(rows, range, 'mau_returning', f) },
+    ],
+    lines: [
+      { n:'Stickiness загальний (DAU/MAU)', short:'загальний', c:'--s-violet', v: seriesFor(rows, range, 'stickiness_pct', f), fmt:v=>fmtDec(v)+'%', dots:true, lab:'below' },
+      { n:'Stickiness повернулись', short:'повернулись', c:'--s-garnet', v: seriesFor(rows, range, 'stickiness_returning_pct', f), fmt:v=>fmtDec(v)+'%', dots:true, lab:'above' },
+      { n:'Stickiness нові', short:'нові', c:'--s-gold', v: seriesFor(rows, range, 'stickiness_new_pct', f), fmt:v=>fmtDec(v)+'%', dots:true, lab:'below' },
+    ],
+    fmtVal: fmtInt,
+  });
+}
+
+/* ===================== Читатели / Реакции / Авторы: спільна інфраструктура ===================== */
+/* сегмент Все/Нові/Вернулись — per-card стан, керується кнопками .pseg у шапці картки */
+const SEG_OPTIONS = ['Все','Нові','Вернулись'];
+const segState = {};
+function segFor(elId){ return segState[elId] || 'Все'; }
+
+function seriesForSeg(rows, range, key, segment, src){
+  const lang = langFor(src), plat = platFor(src);
+  return range.map(month=>{
+    const r = rows.find(x=>x.month===month && x.app_name===state.club && x.language===lang && x.platform===plat && x.segment===segment);
+    return r ? r[key] : null;
+  });
+}
+
+function segCfg(elId, onRefresh){
+  return { options: SEG_OPTIONS, current: segFor(elId), onChange: v=>{ segState[elId]=v; onRefresh(); } };
+}
+
+function renderSegCard(elId, hasData, buildCfg, onRefresh, emptyTitle){
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!hasData){
+    el.innerHTML = `<div class="head"><div><h3>${emptyTitle}</h3><div class="sub">немає даних за обраний діапазон</div></div></div>`;
+    return;
+  }
+  render(el, buildCfg(segFor(elId)));
+}
+
+/* ===================== Читатели (11971) ===================== */
+function renderReadCards(){
+  const range = trendRange();
+  M = range.map(fmtMonthLabel);
+  const rows = all('read');
+  const sfs = (key, seg) => seriesForSeg(rows, range, key, seg, 'read');
+  const has = rows.some(x=>x.app_name===state.club && x.language===langFor('read') && x.platform===platFor('read'));
+
+  /* 1. Структура аудиторії за типом читання (ідентично оригінальному c-depth) */
+  renderSegCard('c-read-mix', has, seg => ({
+    title: 'Структура аудиторії за читанням', seg: segCfg('c-read-mix', renderReadCards),
+    info: '• Як розподіляється споживання контенту.\n• Чи росте крос-споживання (читають і новини, і пости), чи аудиторії типів контенту живуть окремо.',
+    sub: 'когорти читачів, % від усіх читачів (у сумі 100%)', type: 'group', h: 230,
+    series: [
+      { n:'Новини і пости', c:'--s-gold', v: sfs('mix_both_pct', seg) },
+      { n:'Тільки новини', c:'--s-garnet', v: sfs('mix_news_only_pct', seg) },
+      { n:'Тільки пости', c:'--s-blue', v: sfs('mix_posts_only_pct', seg) },
+    ],
+    fmtVal: fmtPct, fmtAxis: v=>v+'%', fmtLabel: fmtPct,
+  }), renderReadCards, 'Структура аудиторії за читанням');
+
+  /* 2. Читання: частота і глибина (ідентично оригінальному c-readshare) */
+  renderSegCard('c-read-share', has, seg => ({
+    title: 'Читання: частота і глибина', seg: segCfg('c-read-share', renderReadCards),
+    info: '• Наскільки читання проникає в аудиторію і чи стає регулярною звичкою.\n• Чи росте глибина читання у типового читача (медіана контенту).',
+    sub: '% від MAU; stickiness — та сама шкала; медіана контенту (пости + новини) на читача — права вісь',
+    type: 'stack', h: 230, yMax: 100, noTotal: true, inLabelTop: true,
+    series: [
+      { n:'Читачі (% від MAU)', c:'--s-blue', v: sfs('pct_readers_any', seg) },
+    ],
+    lines: [
+      { n:'Медіана контенту на читача (пости + новини)', short:'медіана', c:'--s-garnet', v: sfs('median_articles_per_reader', seg), fmt: fmtDec },
+      { n:'Stickiness читачів (DAU/MAU)', short:'stickiness', c:'--s-violet', v: sfs('stickiness_readers_pct', seg), fmt:v=>fmtDec(v)+'%', dots:true, leftAxis:true },
+    ],
+    fmtVal: fmtPct, fmtAxis: v=>v+'%', fmtIn: fmtPct,
+  }), renderReadCards, 'Читання: частота і глибина');
+
+  /* 3. Читачі новин/постів/тредів: охоплення і глибина (ідентично оригінальному c-readers) */
+  renderSegCard('c-read-reach', has, seg => ({
+    title: 'Читачі новин, постів і тредів: охоплення і глибина', seg: segCfg('c-read-reach', renderReadCards),
+    info: '• Як співвідносяться аудиторії новин, постів і тредів і яка росте швидше.\n• Чи росте глибина читання у типового читача кожного типу (медіана).',
+    sub: 'стовпці — читачів за місяць; лінії — медіана прочитаного на читача, права вісь',
+    type: 'group', h: 240,
+    series: [
+      { n:'Читачі новин', c:'--s-garnet', v: sfs('readers_news', seg) },
+      { n:'Читачі постів', c:'--s-blue', v: sfs('readers_posts', seg) },
+      { n:'Читачі тредів', c:'--s-gold', v: sfs('readers_threads', seg) },
+    ],
+    lines: [
+      { n:'Медіана новин на читача новин', short:'мед. новин', c:'--s-garnet', v: sfs('median_news_per_reader', seg), fmt: fmtDec, lab:'below' },
+      { n:'Медіана постів на читача постів', short:'мед. постів', c:'--s-blue', v: sfs('median_posts_per_reader', seg), fmt: fmtDec, lab:'below' },
+      { n:'Медіана тредів на читача тредів', short:'мед. тредів', c:'--s-gold', v: sfs('median_thread_per_reader', seg), fmt: fmtDec, lab:'below' },
+    ],
+    fmtVal: fmtInt,
+  }), renderReadCards, 'Читачі новин, постів і тредів: охоплення і глибина');
+
+  /* 4. Читачі постів і новин, % від MAU (ідентично оригінальному c-readers-mau) */
+  renderSegCard('c-read-mau', has, seg => ({
+    title: 'Читачі постів і новин', seg: segCfg('c-read-mau', renderReadCards),
+    info: '• Яка частка аудиторії застосунку читає новини і пости — проникнення читання.\n• Чи змінюється проникнення при змінах аудиторії, чи лишається стабільним.',
+    sub: 'стовпці — MAU-події: скільки людей читали за місяць; лінії — та сама величина, поділена на MAU застосунку, права вісь',
+    type: 'group', h: 240, rMax: 100,
+    series: [
+      { n:'Читачі постів (MAU-події)', c:'--s-blue', v: sfs('readers_posts', seg) },
+      { n:'Читачі новин (MAU-події)', c:'--s-gold', v: sfs('readers_news', seg) },
+    ],
+    lines: [
+      { n:'Читачі постів / MAU застосунку', short:'пости, % MAU', c:'--s-garnet', v: sfs('pct_readers_posts', seg), fmt: fmtPct, dots:true, lab:'below' },
+      { n:'Читачі новин / MAU застосунку', short:'новини, % MAU', c:'--s-violet', v: sfs('pct_readers_news', seg), fmt: fmtPct, dots:true, lab:'above' },
+    ],
+    fmtVal: fmtInt,
+  }), renderReadCards, 'Читачі постів і новин');
+}
+
+/* ===================== Реакции (11972) ===================== */
+function renderReactCards(){
+  const range = trendRange();
+  M = range.map(fmtMonthLabel);
+  const rows = all('react');
+  const sfs = (key, seg) => seriesForSeg(rows, range, key, seg, 'react');
+  const has = rows.some(x=>x.app_name===state.club && x.language===langFor('react') && x.platform===platFor('react'));
+
+  const reactCard = (elId, title, usersKey, sumKey, medKey) => renderSegCard(elId, has, seg => ({
+    title, seg: segCfg(elId, renderReactCards),
+    info: '• За рахунок чого росте кількість реакцій: ширше коло реагуючих, чи активніший кожен.\n• Чи росте активність типового реагуючого (медіана).',
+    sub: 'стовпці — юзери, що реагували, і їхні реакції за місяць; лінія — медіана на реагуючого юзера, права вісь',
+    type: 'group',
+    series: [
+      { n:'Реагуючі юзери', c:'--s-blue', v: sfs(usersKey, seg) },
+      { n:'Реакції (сума)', c:'--s-gold', v: sfs(sumKey, seg) },
+    ],
+    lines: [
+      { n:'Медіана на реагуючого юзера', short:'медіана', c:'--s-violet', v: sfs(medKey, seg), fmt: fmtDec },
+    ],
+    fmtVal: fmtInt,
+  }), renderReactCards, title);
+
+  reactCard('c-react-posts', 'Реакції на пости', 'reacting_users_posts', 'post_reactions_sum', 'median_reactions_per_user_posts');
+  reactCard('c-react-comments', 'Реакції на коментарі', 'reacting_users_comments', 'comment_reactions_sum', 'median_reactions_per_user_comments');
+  reactCard('c-react-threads', 'Реакції на треди', 'reacting_users_threads', 'thread_reactions_sum', 'median_reactions_per_user_threads');
+
+  renderSegCard('c-react-stick', has, seg => ({
+    title: 'Stickiness реакцій (DAU/MAU)', seg: segCfg('c-react-stick', renderReactCards),
+    info: '• Чи закріплюється звичка реагувати: повертаються до дії протягом місяця, чи це разовий сплеск.',
+    sub: 'середній DAU реагуючих ÷ MAU реагуючих, %', type: 'line',
+    series: [
+      { n:'Реакції на пости', c:'--s-blue', v: sfs('stickiness_reacting_posts_pct', seg) },
+      { n:'Реакції на коментарі', c:'--s-garnet', v: sfs('stickiness_reacting_comments_pct', seg) },
+      { n:'Реакції на треди', c:'--s-gold', v: sfs('stickiness_reacting_threads_pct', seg) },
+    ],
+    fmtVal: fmtPct, fmtAxis: v=>v+'%',
+  }), renderReactCards, 'Stickiness реакцій (DAU/MAU)');
+}
+
+/* ===================== Авторы (11973) ===================== */
+function renderAuthCards(){
+  const range = trendRange();
+  M = range.map(fmtMonthLabel);
+  const rows = all('auth');
+  const sfs = (key, seg) => seriesForSeg(rows, range, key, seg, 'auth');
+  const has = rows.some(x=>x.app_name===state.club && x.language===langFor('auth') && x.platform===platFor('auth'));
+
+  const authCard = (elId, title, authorsKey, sumKey, medKey) => renderSegCard(elId, has, seg => ({
+    title, seg: segCfg(elId, renderAuthCards),
+    info: '• За рахунок чого росте обсяг: ширше коло авторів, чи активніший кожен.\n• Чи пише більше типовий автор (медіана), чи потік тримається на вузькому ядрі.',
+    sub: 'стовпці — автори і їхні події за місяць; лінія — медіана на автора, права вісь',
+    type: 'group',
+    series: [
+      { n:'Автори (юзери)', c:'--s-blue', v: sfs(authorsKey, seg) },
+      { n:'Події (сума)', c:'--s-gold', v: sfs(sumKey, seg) },
+    ],
+    lines: [
+      { n:'Медіана на автора-юзера', short:'медіана', c:'--s-violet', v: sfs(medKey, seg), fmt: fmtDec },
+    ],
+    fmtVal: fmtInt,
+  }), renderAuthCards, title);
+
+  authCard('c-auth-chats', 'Автори повідомлень у чатах', 'authors_chat', 'chat_sum', 'median_chat');
+  authCard('c-auth-comments', 'Автори коментарів', 'authors_comment', 'comment_sum', 'median_comment');
+  authCard('c-auth-posts', 'Автори постів', 'authors_posts', 'posts_sum', 'median_posts');
+  authCard('c-auth-threads', 'Автори тредів', 'authors_threads', 'threads_sum', 'median_threads');
+
+  renderSegCard('c-auth-stick', has, seg => ({
+    title: 'Stickiness авторів (DAU/MAU)', seg: segCfg('c-auth-stick', renderAuthCards),
+    info: '• Який формат письма формує стійку звичку, а який живе разовими сплесками.\n• Чи закріплюються нові автори: чи росте регулярність разом із кількістю пишучих.',
+    sub: 'середній DAU авторів ÷ MAU авторів, %', type: 'line',
+    series: [
+      { n:'Чат', c:'--s-blue', v: sfs('stickiness_chat_pct', seg) },
+      { n:'Коментарі', c:'--s-garnet', v: sfs('stickiness_comment_pct', seg) },
+      { n:'Пости', c:'--s-gold', v: sfs('stickiness_posts_pct', seg) },
+      { n:'Треди', c:'--s-violet', v: sfs('stickiness_threads_pct', seg) },
+    ],
+    fmtVal: fmtPct, fmtAxis: v=>v+'%',
+  }), renderAuthCards, 'Stickiness авторів (DAU/MAU)');
+}
+
+/* ===================== Time to Activation (11968) ===================== */
+const W_COLORS = ['--w0','--w1','--w2','--w3'];
+const TTA_META = {
+  news_views:        { g:'Новини',    n:'Перегляди новин' },
+  post_views:        { g:'Пости',     n:'Перегляди постів' },
+  post_reactions:    { g:'Пости',     n:'Реакції на пости' },
+  posts_written:     { g:'Пости',     n:'Написання поста' },
+  blogs_created:      { g:'Пости',     n:'Створення поста (клік "опублікувати")' },
+  comments_posted:   { g:'Коментарі', n:'Написання коментаря' },
+  comment_reactions: { g:'Коментарі', n:'Реакції на коментарі' },
+  thread_views:      { g:'Треди',     n:'Перегляди тредів' },
+  thread_reactions:  { g:'Треди',     n:'Реакції на треди' },
+  threads_created:   { g:'Треди',     n:'Написання треда' },
+  chat_views:        { g:'Чат',       n:'Перегляди чату' },
+  chat_messages:     { g:'Чат',       n:'Написання повідомлення в чаті' },
+};
+const TTA_GROUP_ORDER = ['Новини','Пости','Коментарі','Треди','Чат'];
+
+function renderTTA(){
+  const el = document.getElementById('c-tta');
+  if (!el || !dateState.ttaMonth) return;
+  const ttaMonth = dateState.ttaMonth;
+  const rows = all('tta').filter(r=>normMonth(r.period)===ttaMonth && r.app_name===state.club && r.language===langFor('tta') && r.platform===platFor('tta'));
+  if (!rows.length){
+    el.innerHTML = `<div class="head"><div><h3>Time to activation</h3><div class="sub">немає даних 11968 за ${fmtMonthLabel(ttaMonth)}</div></div></div>`;
+    return;
+  }
+  const byMetric = {};
+  rows.forEach(r=>{
+    if (!byMetric[r.metric_name]) byMetric[r.metric_name] = { cohortSize: r.cohort_size, weeks: [0,0,0,0] };
+    const wk = Math.max(0, Math.min(3, r.wk));
+    byMetric[r.metric_name].weeks[wk] = r.activated_n || 0;
+  });
+  const cohortSize = rows[0].cohort_size || 0;
+  const items = Object.keys(byMetric)
+    .map(m=>{
+      const meta = TTA_META[m] || { g:'Інше', n:m };
+      const weeks = byMetric[m].weeks;
+      const reach = weeks.reduce((a,v)=>a+v,0);
+      const pct = weeks.map(v=> reach>0 ? Math.round(v/reach*100) : 0);
+      return { g:meta.g, n:meta.n, weeks:pct, reach };
+    })
+    .sort((a,b)=>{
+      const ga = TTA_GROUP_ORDER.indexOf(a.g), gb = TTA_GROUP_ORDER.indexOf(b.g);
+      return ga!==gb ? ga-gb : b.reach-a.reach;
+    });
+
+  const nameW = el.clientWidth < 700 ? 120 : 190;
+  const barW = Math.max(120, el.clientWidth - nameW - 108 - 20 - 34);
+  const labelOk = v => v/100*barW >= 30;
+
+  el.innerHTML = `<div class="head"><div><h3>Time to activation — всі події</h3>
+    <div class="sub">через скільки тижнів після встановлення новачок вперше робить дію;
+    кожен рядок — 100% тих, хто дійшов до події, справа — скільки їх;
+    когорта інсталів за ${fmtMonthLabel(ttaMonth)} (${fmtInt(cohortSize)} чол.)</div></div>
+    <div class="actions"><button class="tbtn ibtn" id="tta-ib" aria-expanded="false"
+      title="Що хочемо побачити на цьому графіку" aria-label="Опис графіка">i</button></div></div>
+    <div class="info-p" id="tta-ip" style="display:none">• У якому порядку новачок освоює формати: що пробує в перший тиждень, а до чого доходить пізніше.
+• Наскільки масово новачки взагалі доходять до кожної події (права колонка).</div>
+    <div class="legend">${['w0','w1','w2','w3+'].map((w,i)=>
+      `<span class="it"><span class="sw" style="background:${cvar(W_COLORS[i])}"></span>${w}</span>`).join('')}</div>
+    <div class="tta">${items.map((r,ri)=>{
+      const gh = (ri===0 || items[ri-1].g!==r.g) ? `<div class="tta-g">${r.g}</div>` : '';
+      return `${gh}<div class="tta-row"><div class="tta-name">${r.n}</div>
+        <div class="tta-bar">${r.weeks.map((v,i)=>{
+          const light = i===0;
+          return `<div class="tta-seg" style="width:${v}%;background:${cvar(W_COLORS[i])};color:${light?'#10233f':'#fff'}">${labelOk(v)?v+'%':''}</div>`;
+        }).join('')}</div>
+        <div class="tta-k">${fmtCompact(r.reach)} <span class="pct">${cohortSize>0?'('+Math.round(r.reach/cohortSize*100)+'%)':''}</span></div></div>`;
+    }).join('')}</div>`;
+  const ib = el.querySelector('#tta-ib'), ip = el.querySelector('#tta-ip');
+  ib.onclick = ()=>{ const on = ip.style.display==='none';
+    ip.style.display = on?'block':'none'; ib.setAttribute('aria-expanded', on); };
+}
+
+/* ===================== KPI-плитки ===================== */
+/* рік тому — той самий календарний місяць попереднього року (YoY), як в оригінальному макеті */
+function yoyMonth(m){
+  if (!m) return m;
+  const [y, mo] = m.split('-').map(Number);
+  const d = new Date(Date.UTC(y-1, mo-1, 1));
+  return d.toISOString().slice(0,7) + '-01';
+}
+
+/* попередній календарний місяць (MoM) */
+function prevMonth(m){
+  if (!m) return m;
+  const [y, mo] = m.split('-').map(Number);
+  const d = new Date(Date.UTC(y, mo-2, 1));
+  return d.toISOString().slice(0,7) + '-01';
+}
+
+/* isPct=true — метрика вже у %, різниця рахується в п.п.; інакше — відносна зміна у % */
+function deltaHTML(cur, prior, compareLabel, isPct){
+  if (cur == null || prior == null || prior === 0) return '';
+  const diff = isPct ? (cur - prior) : ((cur - prior) / prior * 100);
+  const dir = diff > 0.05 ? 'up' : diff < -0.05 ? 'down' : '';
+  const arrow = diff > 0.05 ? '↑' : diff < -0.05 ? '↓' : '→';
+  const valStr = isPct ? `${Math.abs(diff).toFixed(1)} п.п.` : `${Math.abs(diff).toFixed(0)}%`;
+  return `<div class="delta ${dir}">${arrow} ${valStr} <span class="vs">до ${compareLabel}</span></div>`;
+}
+
+function renderKPI(){
+  const tiles = document.getElementById('kpi-tiles');
+  const month = dateState.kpiMonth;
+  const f = r => r.app_name===state.club && r.language===langFor('aud') && r.platform===platFor('aud');
+  const rows = all('aud').filter(r=>r.month===month && f(r));
+  if (!rows.length){
+    tiles.innerHTML = `<div class="tile"><div class="lbl">Немає даних 11967 за ${fmtMonthLabel(month)}</div></div>`;
+    return;
+  }
+  const r = rows[0];
+  const yMonth = yoyMonth(month);
+  const y = all('aud').filter(x=>x.month===yMonth && f(x))[0] || null;
+  const yl = fmtMonthLabel(yMonth);
+  const pMonth = prevMonth(month);
+  const p = all('aud').filter(x=>x.month===pMonth && f(x))[0] || null;
+  const pl = fmtMonthLabel(pMonth);
+  const deltas = (key, isPct) => deltaHTML(r[key], p&&p[key], pl, isPct) + deltaHTML(r[key], y&&y[key], yl, isPct);
+  const nf = new Intl.NumberFormat('uk-UA');
+  tiles.innerHTML = `
+    <div class="tile"><div class="lbl">MAU</div><div class="val">${nf.format(r.mau||0)}</div>${deltas('mau', false)}</div>
+    <div class="tile"><div class="lbl">Нові</div><div class="val">${nf.format(r.mau_new||0)}</div>${deltas('mau_new', false)}</div>
+    <div class="tile"><div class="lbl">Повернулись</div><div class="val">${nf.format(r.mau_returning||0)}</div>${deltas('mau_returning', false)}</div>
+    <div class="tile"><div class="lbl">Stickiness</div><div class="val">${r.stickiness_pct!=null?r.stickiness_pct+'%':'—'}</div>${deltas('stickiness_pct', true)}</div>
+  `;
+}
+
+function refresh(){
+  document.getElementById('report-period').textContent =
+    fmtMonthLabel(trendRange()[0]) + ' — ' + fmtMonthLabel(trendRange()[trendRange().length-1]);
+  renderKPI();
+  renderTTA();
+  renderAudTrend();
+  renderReadCards();
+  renderReactCards();
+  renderAuthCards();
+}
+
+/* ===================== перемикання екранів ===================== */
+function showReport(){
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('report-screen').style.display = 'block';
+  renderFilterBars();
+  renderRangeControl();
+  renderKpiControl();
+  renderTtaControl();
+  refresh();
+}
+document.getElementById('gen-btn').addEventListener('click', ()=>{
+  D = buildModel();
+  if (!D.periods.length && !D.ttaPeriods.length){
+    alert('Не знайдено жодного розпізнаного місяця в завантажених файлах.');
+    return;
+  }
+  showReport();
+});
+document.getElementById('back-btn').addEventListener('click', ()=>{
+  document.getElementById('report-screen').style.display = 'none';
+  document.getElementById('upload-screen').style.display = 'block';
+});
+
+/* ===================== серіалізація/регідратація даних для standalone HTML-експорту ===================== */
+function serializeStore(){
+  const obj = {};
+  Object.keys(store).forEach(src=> obj[src] = Array.from(store[src].values()));
+  return obj;
+}
+function rehydrateStore(obj){
+  Object.keys(obj).forEach(src=>{
+    if (!store[src]) return;
+    obj[src].forEach(r=> store[src].set(rowKey(src, r), r));
+  });
+}
+
+/* ===================== експорт HTML / PDF =====================
+   "⬇ HTML" пакує весь застосунок standalone: поточну розмітку/стилі/скрипт (як є)
+   + завантажені дані (усі 5 джерел) як JSON у окремому script-тегу перед закриттям body.
+   При відкритті збереженого файлу IIFE бачить window.__DA320_DATA__, регідратує store
+   і сама викликає showReport() — звіт повністю інтерактивний (легенда, pseg, дата-контролі),
+   не залежить від живої сесії генератора. Дозаливати нові місяці можна і в збереженій копії —
+   кнопка "← додати ще файли" поверне на екран завантаження з уже наповненим store. */
+document.getElementById('dl-html').addEventListener('click', ()=>{
+  const dataJson = JSON.stringify(serializeStore()).replace(/</g, '\\u003c');
+  const dataScript = '<script>window.__DA320_DATA__ = ' + dataJson + ';<' + '/script>\n';
+  const outer = document.documentElement.outerHTML;
+  const bodyCloseAt = outer.lastIndexOf('</body>');
+  const html = '<' + '!doctype html>\n' + outer.slice(0, bodyCloseAt) + dataScript + outer.slice(bodyCloseAt);
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const stamp = D && D.periods.length ? D.periods[D.periods.length-1].slice(0,7) : 'export';
+  a.download = 'club-apps-report-' + stamp + '.html';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+});
+document.getElementById('dl-pdf').addEventListener('click', ()=>window.print());
+
+window.__DEBUG = { store, state, dateState, all, langFor, platFor };
+
+/* ререндер графіків при зміні ширини вікна (SVG-рушій рахує ширину від clientWidth картки) */
+let resizeTimer;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{ if (D) refresh(); }, 150);
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ if (D) refresh(); });
+new MutationObserver(()=>{ if (D) refresh(); }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+/* автозапуск при відкритті збереженої standalone-копії
+   Скрипт з даними (__DA320_DATA__) вставляється в HTML ПІСЛЯ цього <script>,
+   тому в момент виконання IIFE його ще нема в DOM — чекаємо DOMContentLoaded,
+   щоб обидва <script>-теги встигли відпрацювати незалежно від порядку вставки. */
+document.addEventListener('DOMContentLoaded', function(){
+  if (typeof window.__DA320_DATA__ !== 'undefined'){
+    rehydrateStore(window.__DA320_DATA__);
+    D = buildModel();
+    if (D.periods.length || D.ttaPeriods.length) showReport();
+  }
+});
+
+})();
+</script>
+</body>
+</html>
