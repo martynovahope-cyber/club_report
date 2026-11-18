@@ -224,6 +224,7 @@
   .legend .it.off .tx { text-decoration: line-through; }
   .legend .sw { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   .legend .sw.line { width: 14px; height: 2.5px; border-radius: 2px; }
+  .legend .new { font-size: 9px; font-weight: 700; letter-spacing: .04em; color: #fff; background: var(--s-blue); padding: 1px 5px; border-radius: 4px; line-height: 1.3; }
 
   .plot { position: relative; }
   .plot svg { display: block; width: 100%; }
@@ -780,8 +781,8 @@ const GRP_SUM = {
   ret:  ['installs','d0_users','d1_users','d7_users','d14_users','d30_users','installs_prev','d0_users_prev','d1_users_prev','d7_users_prev','d14_users_prev','d30_users_prev','wau_this','wau_prev','retained_this','wau_prevprev','retained_prev'],
   dpa:  ['waus','viewed_users','reacted_users','commented_users','created_content_users','waus_prev','viewed_users_prev','reacted_users_prev','commented_users_prev','created_content_users_prev'],
   dpn:  ['installs','viewed_users','reacted_users','commented_users','created_content_users','installs_prev','viewed_users_prev','reacted_users_prev','commented_users_prev','created_content_users_prev'],
-  aa:   ['waus','waus_prev','comment_users','comment_users_prev','reaction_users','reaction_users_prev','follow_users','follow_users_prev','thread_users','thread_users_prev','post_users','post_users_prev','blog_users','blog_users_prev','poll_match_users','poll_match_users_prev','chat_users','chat_users_prev','active_users','active_users_prev','post_total','post_total_prev','follow_total','follow_total_prev'],
-  rx:   ['likes_total','likes_total_prev','likes_posts','likes_comments','likes_threads','dislikes_total','dislikes_total_prev','dislikes_posts','dislikes_comments','dislikes_threads','poll_votes','poll_votes_prev','match_votes','match_votes_prev','liking_users','disliking_users','poll_voters','match_voters'],
+  aa:   ['waus','waus_prev','comment_users','comment_users_prev','reaction_users','reaction_users_prev','follow_users','follow_users_prev','thread_users','thread_users_prev','post_users','post_users_prev','blog_users','blog_users_prev','poll_match_users','poll_match_users_prev','chat_users','chat_users_prev','chat_reaction_users','chat_reaction_users_prev','active_users','active_users_prev','post_total','post_total_prev','follow_total','follow_total_prev'],
+  rx:   ['likes_total','likes_total_prev','likes_posts','likes_comments','likes_threads','dislikes_total','dislikes_total_prev','dislikes_posts','dislikes_comments','dislikes_threads','poll_votes','poll_votes_prev','match_votes','match_votes_prev','liking_users','disliking_users','poll_voters','match_voters','chat_likes','chat_dislikes','chat_reactions_prev','chat_reacting_users'],
   subs: ['follows_total','follows_total_prev','follows_publications','follows_blog','follows_search','follows_profile','follows_personal_feed','follows_onboarding','follows_other','unfollows_total','unfollows_total_prev','net_growth'],
   ugc:  ['chatters','chatters_prev','total_chat_messages','total_chat_messages_prev','commentators','commentators_prev','total_comments','total_comments_prev','blog_attempts','blogs_created','blogs_created_prev','blog_authors','blog_authors_prev','threads_created','threads_created_prev','thread_authors','thread_authors_prev'],
   geo:  ['users','users_prev','users_wow_abs','sessions','sessions_prev','sessions_wow_abs','pageviews','pageviews_prev'],
@@ -1241,8 +1242,8 @@ function render(el, cfg){
     const b = document.createElement('button');
     b.className = 'it'+(hid.has(s.n)?' off':'');
     b.setAttribute('aria-pressed', !hid.has(s.n));
-    b.title = 'Показати/сховати на графіку';
-    b.innerHTML = `<span class="sw ${isLine?'line':''}" style="background:${cvar(s.c)}"></span><span class="tx">${s.n}</span>`;
+    b.title = (s.hint ? s.hint + ' ' : '') + 'Показати/сховати на графіку';
+    b.innerHTML = `<span class="sw ${isLine?'line':''}" style="background:${cvar(s.c)}"></span><span class="tx">${s.n}</span>${s.isNew?'<span class="new">NEW</span>':''}`;
     b.onclick = ()=>{ hid.has(s.n) ? hid.delete(s.n) : hid.add(s.n); render(el, cfg); };
     leg.appendChild(b);
   };
@@ -2012,6 +2013,7 @@ function renderAa(){
     ['comment','Коментар','--s-blue'], ['reaction','Реакція','--s-gold'], ['follow','Підписка','--s-garnet'],
     ['thread','Тред','--s-violet'], ['post','Пост','--s-blue'], ['blog','Блог','--s-gold'],
     ['poll_match','Опитування / матч','--s-garnet'], ['chat','Чат','--s-violet'],
+    ['chat_reaction','Реакція в чаті','--s-blue'],
   ];
   const el1 = document.getElementById('c-aa-bars');
   if (el1){
@@ -2020,7 +2022,7 @@ function renderAa(){
     else {
       const rp = newRow('aa', prevMonth(curMonth()));
       const w = nn(r.waus), wp = rp ? nn(rp.waus) : 0;
-      const brows = cats.map(([k,lbl,c])=>{
+      const brows = cats.filter(([k])=>k!=='chat_reaction' || r.chat_reaction_users!=null).map(([k,lbl,c])=>{
         const u = nn(r[k+'_users']), p = w ? u/w*100 : 0;
         const pp = wp ? nn(rp[k+'_users'])/wp*100 : null;
         return { lbl, c, u, p, dpp: pp==null ? null : p-pp };
@@ -2073,6 +2075,11 @@ function renderRx(){
         { n:'Дизлайки', c:'--s-garnet', v:S('dislikes_total') },
         { n:'Content-опитування', c:'--s-gold', v:S('poll_votes') },
         { n:'«Хто переможе»', c:'--s-violet', v:S('match_votes') },
+        ...(()=>{
+          const cl = S('chat_likes'), cd = S('chat_dislikes');
+          const v = cl.map((x,i)=> (x==null||x===''||cd[i]==null||cd[i]==='') ? null : nn(x)+nn(cd[i]));
+          return v.some(x=>x) ? [{ n:'Реакції в чатах', c:'--s-gray', v, isNew:true, hint:'З жовтня 2026. Не входять у Лайки й Дизлайки.' }] : [];
+        })(),
       ],
       fmtVal: fmtInt,
     });
@@ -2092,7 +2099,7 @@ function renderRx(){
         { lbl:'Дизлайки: треди',   c:'--s-garnet', u:nn(r.dislikes_threads),p:nn(r.dislikes_threads)/dt*100,dpp:null },
       ];
       pctBarsCard(el2, 'Де відбувається реакція — ' + fmtMonthLabel(curMonth()),
-        'частка лайків (від усіх лайків) та дизлайків (від усіх дизлайків) по поверхнях',
+        'частка лайків (від усіх лайків) та дизлайків (від усіх дизлайків) по поверхнях' + ((r.chat_likes!=null && r.chat_likes!=='') ? '. Реакції в чатах окремо, не входять у частки: 👍 ' + fmtInt(nn(r.chat_likes)) + ' · 👎 ' + fmtInt(nn(r.chat_dislikes)) + ', користувачів ' + fmtInt(nn(r.chat_reacting_users)) : ''),
         '• Основна арена реакцій — пости чи коментарі.\n• Куди зміщується негатив (дизлайки).',
         brows, { fmtCount: fmtCompact, monthId:'msel-rx' });
     }
@@ -2316,7 +2323,10 @@ function serializeStore(){
     const rows = Array.from(store[src].values()).filter(r=> !isGroupKey(r.language));
     if (!rows.length){ obj[src] = { c:[], v:[] }; return; }
     const keep = EXPORT_KEEP[src];
-    const cols = Object.keys(rows[0]).filter(k=> !EXPORT_DROP.has(k) && (!keep || keep.includes(k)));
+    /* колонки = об'єднання по ВСІХ рядках: нові колонки (напр. chat_* з 05.11.2026) є лише в нових місяцях,
+       а rows[0] зазвичай зі старого файлу — інакше вони мовчки випадали зі збереженого HTML */
+    const colSet = new Set(); rows.forEach(r=>{ for (const k in r) colSet.add(k); });
+    const cols = Array.from(colSet).filter(k=> !EXPORT_DROP.has(k) && (!keep || keep.includes(k)));
     /* табличний формат {c:колонки, v:масив значень} — gzip стискає в рази краще,
        ніж масив об'єктів із повтореними ключами на кожному з сотень тисяч рядків */
     obj[src] = { c: cols, v: rows.map(r=> cols.map(k=> r[k] === undefined ? null : r[k])) };
